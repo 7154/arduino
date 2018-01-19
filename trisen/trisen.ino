@@ -10,13 +10,9 @@ const double motorB2 = 5;
 const double PWM_motB = 9;
 
 //　フォトトランジスタの入力設定
-const int sensorA = 2;//2;左この値がおかしい
-const int sensorB = 0;//3;右
-const int sensorC = 1;//;中この値がおかしい
-//　センサから読み取った値（analog）
-double valA = 0;
-double valB = 0;
-double valC = 0;
+double left = 0;//0
+double right = 0;//1
+double centor = 0;//2
 
 //　閾値
 //センサの閾値
@@ -43,9 +39,9 @@ double en2 = 0;
 double pad = 0;
 
 //PWMの出力(255が最大,130〜200程度が調度良い)
-double PWM_pow = 120;
+double PWM_pow = 75;
 
-int pri = 0;
+//int pri = 0;
 
 void flash(){
 		en2 = en1;
@@ -53,16 +49,21 @@ void flash(){
 		en = pad;
 		dMv = ((Kp*(en-en1))+(Ki*en)+(Kd*((en-en1)-(en1-en2))));
 		Mv = Mv + dMv;
-		if(pri == 10){
-				Serial.println(valA);
+		/*if(pri == 100){
+				Serial.print("left:");
+				Serial.print(left);
+				Serial.print("right:");
+				Serial.print(right);
+				Serial.print("centor:");
+				Serial.println(centor);
 				pri = 0;
 		}else{
 				pri++;
-		}
+		}*/
 }
 
 void setup(){
-		Serial.begin(9600);
+		//Serial.begin(9600);
 		pinMode(motorA1,OUTPUT);
 		pinMode(motorA2,OUTPUT);
 		pinMode(motorB1,OUTPUT);
@@ -74,35 +75,26 @@ void setup(){
 }
 
 void loop(){
-  	valA = analogRead(sensorA);
-  	valB = analogRead(sensorB);
-  	valC = analogRead(sensorC);
+  	left = analogRead(0);
+  	right = analogRead(2);
+  	centor = analogRead(1);
     noInterrupts();
     pad=0;
-		if(valB<alpha){
-				pad = 1;
+		if(right<alpha){
+				pad = 1*(alpha-right);
+		}if(left<alpha){
+				pad = -1*(alpha-left);
 		}
-                if(valA<alpha){
-				pad = -1;
-		}
-                if(valB<alpha && valA<alpha){
+                if(right<alpha && left<alpha){
                                 pad = 0;
                 }
 interrupts();
 
-double Mvv = 0;
-if(Mv>1){
-  Mvv=1;
-}else if(Mv<-1){
-  Mvv=-1;
-}else{
-  Mvv=Mv;
-}
 		digitalWrite(motorA1,HIGH);
 		digitalWrite(motorA2,LOW);
-		analogWrite(PWM_motA,PWM_pow+(Mvv*PWM_pow));
+		analogWrite(PWM_motA,PWM_pow+(Mv*PWM_pow));
 		digitalWrite(motorB1,HIGH);
 		digitalWrite(motorB2,LOW);
-		analogWrite(PWM_motB,PWM_pow-(Mvv*PWM_pow));
+		analogWrite(PWM_motB,PWM_pow-(Mv*PWM_pow));
 
 }

@@ -10,9 +10,9 @@ const double motorB2 = 5;
 const double PWM_motB = 9;
 
 //　フォトトランジスタの入力設定
-const int sensorA = 2;//2;左この値がおかしい
-const int sensorB = 0;//3;右
-const int sensorC = 1;//;中この値がおかしい
+const int sensorA = 0;//2;左この値がおかしい
+const int sensorB = 1;//3;右
+const int sensorC = 2;//;中この値がおかしい
 //　センサから読み取った値（analog）
 double valA = 0;
 double valB = 0;
@@ -26,11 +26,11 @@ double alpha = 500;//100;
 double target = 0;
 //PID制御値
 //Kp
-double Kp = 0.7;
+double Kp = 0.8;
 //Ki
-double Ki = 0.0001;
+double Ki = 0.0000001;
 //Kd
-double Kd = 0.7;
+double Kd = 0;
 //前回と前々回の操作量
 double Mv = 0;
 //今回操作量偏差
@@ -43,9 +43,9 @@ double en2 = 0;
 double pad = 0;
 
 //PWMの出力(255が最大,130〜200程度が調度良い)
-double PWM_pow = 120;
+double PWM_pow = 80;
 
-int pri = 0;
+//int pri = 0;
 
 void flash(){
 		en2 = en1;
@@ -53,16 +53,9 @@ void flash(){
 		en = pad;
 		dMv = ((Kp*(en-en1))+(Ki*en)+(Kd*((en-en1)-(en1-en2))));
 		Mv = Mv + dMv;
-		if(pri == 10){
-				Serial.println(valA);
-				pri = 0;
-		}else{
-				pri++;
-		}
 }
 
 void setup(){
-		Serial.begin(9600);
 		pinMode(motorA1,OUTPUT);
 		pinMode(motorA2,OUTPUT);
 		pinMode(motorB1,OUTPUT);
@@ -79,15 +72,23 @@ void loop(){
   	valC = analogRead(sensorC);
     noInterrupts();
     pad=0;
-		if(valB<alpha){
-				pad = 1;
+		if(valC<alpha){
+				pad = 0.5;
 		}
-                if(valA<alpha){
-				pad = -1;
+    if(valA<alpha){
+				pad = -0.5;
 		}
-                if(valB<alpha && valA<alpha){
-                                pad = 0;
-                }
+    if(valC<alpha && valA<alpha){
+    		pad = 0;
+    }
+    if(valC<alpha && valB<alpha){
+    		pad = 1;
+    }
+    if(valA<alpha && valB<alpha){
+    		pad = -1;
+    }
+
+
 interrupts();
 
 double Mvv = 0;
@@ -100,9 +101,10 @@ if(Mv>1){
 }
 		digitalWrite(motorA1,HIGH);
 		digitalWrite(motorA2,LOW);
-		analogWrite(PWM_motA,PWM_pow+(Mvv*PWM_pow));
+		analogWrite(PWM_motA,PWM_pow+(Mvv*PWM_pow)+5);
 		digitalWrite(motorB1,HIGH);
 		digitalWrite(motorB2,LOW);
 		analogWrite(PWM_motB,PWM_pow-(Mvv*PWM_pow));
+
 
 }
